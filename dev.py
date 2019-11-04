@@ -349,7 +349,7 @@ def getReportPath(path, _files):
 
     # warning find .xls file
     if _isXls:
-        errorList.append("./", "We have found .xls file in report list", "Warning")
+        errorList.append(error("./", "We have found .xls file in report list", "Warning"))
         print("We have found .xls file, but the software can not read the .xls as report table!!!")
         print("Please convert it into .xlsx file, if you want to read it!!!")
 
@@ -418,7 +418,7 @@ def processDir(_filepath):
             else:
                 # ignore the temporary files
                 if "~$" in _file:
-                    errorList.append(_lastpath, "find \'~$\' in the file name, do use \'~$\' for file name in case we see it as temporary files", "Warning")
+                    errorList.append(error(_lastpath, "find \'~$\' in the file name, do use \'~$\' for file name in case we see it as temporary files", "Warning"))
                     continue
 
                 platform, infoType, infoList = getInfoWithTime(_lastpath)
