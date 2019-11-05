@@ -14,15 +14,22 @@ from openpyxl.styles import Font, Color
 
 # print(table.merged_cells)
 
-# str = "Hello"
-# print(str[1:])
+str = "Hel  lo"
+print(str.split(" ",1))
 
 # open report to write down
-summary = load_workbook("B.xlsx")
+# summary = xlrd.open_workbook("../data/refund.xls",formatting_info=True)
 # newbook = Workbook()
 
 # find the infotype table
-reportTable = summary[summary.sheetnames[0]]
+# reportTable = summary.sheet_by_index(0)
+# print(reportTable.name)
+
+# for merge in reportTable.merged_cells:
+#         rs, re, cs, ce = merge
+#         print(1)
+#         print(merge)
+
 # newsheet = newbook.create_sheet("test")
 # newsheet = summary.copy_worksheet(reportTable)
 
@@ -31,9 +38,9 @@ reportTable = summary[summary.sheetnames[0]]
 
 # print(mergeList)
 # fontStyle = Font(name="Calibri", size=12, color=colors.BLACK)
-reportTable['G3'].value = "safdasfa"
+# reportTable['G3'].value = "safdasfa"
 # reportTable['G3'].font = fontStyle
-summary.save("output.xlsx")
+# summary.save("output.xlsx")
 
 # newbook.save("output.xlsx")
 # summary.close()
