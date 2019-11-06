@@ -1,5 +1,7 @@
 from os import path as osPath
 from os import listdir,system
+import sys
+import linecache
 from datetime import datetime
 from xlrd import open_workbook
 from time import sleep
@@ -8,22 +10,21 @@ from openpyxl import load_workbook,Workbook
 
 # define data class
 class info:
-    account = "undefined"
-    name = "undefined"
-    location = "undefined"
-    salesAmount = 0.0
-    profitRate = 0.0
-    normal = True      # to mark the cell is nornal or not 
+    def __init__(self):
+        self.account = "undefined"
+        self.name = "undefined"
+        self.location = "undefined"
+        self.salesAmount = 0.0
+        self.profitRate = 0.0
+        self.normal = True      # to mark the cell is nornal or not 
 
 
 class refundInfo:
-    platform = ""
-    accountList = []
-    locationList = []
-    refundList = []
-    length = 0
-
     def __init__(self, _platform):
+        self.accountList = []
+        self.locationList = []
+        self.refundList = []
+        self.length = 0
         self.platform = _platform
 
     def add(self, _account, _location, _refund):
@@ -37,25 +38,25 @@ class refundInfo:
 
 
 class error:
-    errorType = "undefined"
-    path = "undefined"
-    message = "undefined"
+    TYPE_ERROR = 1
+    TYPE_WARNING = 2
+    TYPE_NOTFOUND = 3
 
-    def __init__(self,_path,_message, _type = "Error"):
+    def __init__(self,_path,_message, _type = TYPE_ERROR):
         self.errorType = _type
         self.path = _path
         self.message = _message
 
     def printError(self, _type):
-        if _type == "Error":
+        if _type == error.TYPE_ERROR:
             print("ERROR: " + self.message)
             print("PATH: " + self.path + "\n")
         
-        if _type == "Warning":
+        elif _type == error.TYPE_WARNING:
             print("Warning: " + self.message)
             print("PATH: " + self.path + "\n")
 
-        if _type == "NotFound":
+        elif _type == error.TYPE_NOTFOUND:
             print("PATH: " + self.path)
 
 
@@ -64,6 +65,20 @@ def is_contains_chinese(strs):
         if '\u4e00' <= _char <= '\u9fa5':
             return True
     return False
+
+def processException():
+    exc_type, exc_obj, tb = sys.exc_info()
+    f = tb.tb_frame
+    lineno = tb.tb_lineno
+    filename = f.f_code.co_filename
+    linecache.checkcache(filename)
+    line = linecache.getline(filename, lineno, f.f_globals)
+
+    # send error
+    errorList.append(error(filename,'APPLICATION EXCEPTION (LINE {} "{}"): {}'.format(lineno, line.strip(), exc_obj)))
+    print('APPLICATION EXCEPTION (LINE {} "{}"): {}'.format(lineno, line.strip(), exc_obj))
+    
+
 
 def getReportPath(path, _files, _onlyXlsx = True):
     _count = 0
@@ -92,7 +107,7 @@ def getReportPath(path, _files, _onlyXlsx = True):
 
     # warning find .xls file
     if _isXls:
-        errorList.append(error("./", "We have found .xls file in report list", "Warning"))
+        errorList.append(error("./", "We have found .xls file in report list", error.TYPE_WARNING))
         print("We have found .xls file, but the software can not read the .xls as report table!!!")
         print("Please convert it into .xlsx file, if you want to read it!!!")
 
@@ -145,6 +160,7 @@ def findPlatformIndex(_reportTable, _platform):
 
 def processRefundNotFound(_infoType, _platform, _refundAccount, _refundLocation, _refund):
 
+    # find the account and location in the notfound table
     for _row in range(2, notfoundTable.max_row + 1):
         _nfType = notfoundTable["A" + str(_row)].value
         _nfPlatform = notfoundTable["B" + str(_row)].value
@@ -163,124 +179,136 @@ def processRefundNotFound(_infoType, _platform, _refundAccount, _refundLocation,
     notfoundTable["E" + str(_row)].value = "unkown " + _refundLocation
     notfoundTable["I" + str(_row)].value = _refund
 
-    errorList.append(error("REFUND ERROR!", "Can not match the refund account and location!!", "Warning"))
+    # count the failcount and send the error
+    global failCount
+    failCount += 1
+    errorList.append(error("REFUND ERROR!\tType = " + _infoType + "\tPlatform: " + _platform, "Can not match the refund account and location!!", error.TYPE_NOTFOUND))
 
 
 def getRefundInfo(_refundTable):
-    _refundInfoList = []
+    try:
+        _refundInfoList = []
 
-    # use the merge cell to locate the useful cell
-    for merge in _refundTable.merged_cells:
-        rs, re, cs, ce = merge
+        # use the merge cell to locate the useful cell
+        for merge in _refundTable.merged_cells:
+            rs, re, cs, ce = merge
 
-        # ignore some merge cell
-        if re-rs != 1 and ce-cs != 2:
-            continue
+            # ignore some merge cell
+            if re-rs != 1 and ce-cs != 2:
+                continue
 
-        # ignore when it has no info
-        if _refundTable.cell_value(re,cs) == "":
-            continue
-        
-        # read the platform
-        _platform = _refundTable.cell_value(rs,cs).strip().lower()
-        if is_contains_chinese(_platform):
-            errorList.append(error("REFUND ERROR! Type = " + _refundTable.name + "\tPlatform: " + _platform, "We can not identify the chinese as platform name"))
-            continue
-        else:
-            _refundInfoInstance = refundInfo(_platform)
-
-        _row = re + 1 if _refundTable.cell_value(re,cs) == "账号" else re
-        while True:
-            _acclo = _refundTable.cell_value(_row,cs)
-
-            if _acclo == "":
-                break
-            else:
-                # split the account and location
-                if '(' in _acclo:
-                    _accloList = _acclo.split("(",1)
-                    _account = _accloList[0].strip()
-                    _location = _accloList[1].split(')',1)[0].strip()
-                elif '（' in _acclo:
-                    _accloList = _acclo.split("（",1)
-                    _account = _accloList[0].strip()
-                    _location = _accloList[1].split('）',1)[0].strip()
-                else:
-                    _acclo = _acclo.strip()
-                    _accloList = _acclo.split(" ",1)
-                    _account = _accloList[0].strip()
-
-                    # set the default value
-                    if len(_accloList) == 1:
-                        _location = "CN"
-                    else:
-                        _location = _accloList[1].strip()
-                
-                # read the refund
-                _refund = _refundTable.cell_value(_row,cs+1)
-                
-                _refundInfoInstance.add(_account, _location, _refund)
+            # ignore when it has no info
+            if _refundTable.cell_value(re,cs) == "":
+                continue
             
-            # add 1 to row
-            _row += 1
-        
-        # add to the list
-        _refundInfoList.append(_refundInfoInstance)
+            # read the platform
+            _platform = _refundTable.cell_value(rs,cs).strip().lower()
+            if is_contains_chinese(_platform):
+                errorList.append(error("REFUND ERROR! Type = " + _refundTable.name + "\tPlatform: " + _platform, "We can not identify the chinese as platform name"))
+                continue
+            else:
+                _refundInfoInstance = refundInfo(_platform)
+
+            _row = re + 1 if _refundTable.cell_value(re,cs) == "账号" else re
+            while True:
+                _acclo = _refundTable.cell_value(_row,cs)
+
+                if _acclo == "":
+                    break
+                else:
+                    # split the account and location
+                    if '(' in _acclo:
+                        _accloList = _acclo.split("(",1)
+                        _account = _accloList[0].strip()
+                        _location = _accloList[1].split(')',1)[0].strip()
+                    elif '（' in _acclo:
+                        _accloList = _acclo.split("（",1)
+                        _account = _accloList[0].strip()
+                        _location = _accloList[1].split('）',1)[0].strip()
+                    else:
+                        _acclo = _acclo.strip()
+                        _accloList = _acclo.split(" ",1)
+                        _account = _accloList[0].strip()
+
+                        # set the default value
+                        if len(_accloList) == 1:
+                            _location = "CN"
+                        else:
+                            _location = _accloList[1].strip()
+                    
+                    # read the refund
+                    _refund = _refundTable.cell_value(_row,cs+1)
+                    
+                    _refundInfoInstance.add(_account, _location, _refund)
+                
+                # add 1 to row
+                _row += 1
+            
+            # add to the list
+            _refundInfoList.append(_refundInfoInstance)
+    except Exception:
+        processException()
 
     return _refundInfoList
 
 def setRefundInfo(_infoType,  _refundInfoList):
-    # if can not find correct type, return
-    if _infoType not in summary.sheetnames:
-        errorList.append(error("REFUND ERROR","can not find correct sheet: " + _infoType))
-        return 
-    _refundTable = summary[_infoType]
+    try:
+        # if can not find correct type, return
+        if _infoType not in summary.sheetnames:
+            errorList.append(error("REFUND ERROR","can not find correct sheet: " + _infoType))
+            return 
+        _refundTable = summary[_infoType]
 
-    for _refundInstance in _refundInfoList:
-        _index, _offset = findPlatformIndex(_refundTable, _refundInstance.platform)
-        
-        # if can not find platform, send error
-        if _index == -1:
-            errorList.append(error("REFUND ERROR","can not find correct platform: " + _refundInstance.platform))
-            continue
-        
-        # create the dictionary 
-        accountDict = {}
-        for _row in range(_index, _index + _offset):
-            _account = _refundTable["D" + str(_row)].value.strip()
-            _locationList = _refundTable["F" + str(_row)].value.split(' ')
-            _location = _locationList[1].strip() if len(_locationList) > 1 else _locationList[0].strip()
+        for _refundInstance in _refundInfoList:
+            _index, _offset = findPlatformIndex(_refundTable, _refundInstance.platform)
+            
+            # if can not find platform, send error
+            if _index == -1:
+                errorList.append(error("REFUND ERROR","can not find correct platform: " + _refundInstance.platform))
+                continue
+            
+            # create the dictionary 
+            accountDict = {}
+            for _row in range(_index, _index + _offset):
+                _account = _refundTable["D" + str(_row)].value.strip()
+                _locationList = _refundTable["F" + str(_row)].value.split(' ')
+                _location = _locationList[1].strip() if len(_locationList) > 1 else _locationList[0].strip()
 
-            # add to the dict
-            accountDict[_account + '_' + _location] = _row
+                # add to the dict
+                accountDict[_account + '_' + _location] = _row
 
-        # process the refund
-        for _refundIndex in range(0, _refundInstance.length):
-            _refundAccount, _refundLocation, _refund = _refundInstance.get(_refundIndex)
+            # process the refund
+            for _refundIndex in range(0, _refundInstance.length1):
+                _refundAccount, _refundLocation, _refund = _refundInstance.get(_refundIndex)
 
-            if _refundAccount + '_' + _refundLocation in accountDict:
-                _refundTable["I" + str(accountDict[_refundAccount + '_' + _refundLocation])].value = _refund
-            else:
-                processRefundNotFound(_infoType, _refundInstance.platform, _refundAccount, _refundLocation, _refund)
+                if _refundAccount + '_' + _refundLocation in accountDict:
+                    global correctCount
+                    correctCount += 1
+                    _refundTable["I" + str(accountDict[_refundAccount + '_' + _refundLocation])].value = _refund
+                else:
+                    processRefundNotFound(_infoType, _refundInstance.platform, _refundAccount, _refundLocation, _refund)
+    except Exception:
+        processException()
 
     return
 
 def processRefundInfo(_filePath):
 
-    # try:
-    _refundBook = open_workbook(_filePath,formatting_info=True)
-    _refundSheets = _refundBook.sheets()
+    try:
+        _refundBook = open_workbook(_filePath,formatting_info=True)
+        _refundSheets = _refundBook.sheets()
+
+    except Exception:
+        processException()
 
     for _refundsheet in _refundSheets:
         _infoType = _refundsheet.name
 
-        print("正在处理 " + _refundsheet.name + " 退款金额...\r")
+        print("正在处理 " + _refundsheet.name + " 退款金额...")
 
         _refundInfoList = getRefundInfo(_refundsheet)
         setRefundInfo(_infoType, _refundInfoList)
-    # except Exception as e:
-    #     errorList.append(error("REFUND ERROR", "Unexpected Error: {}".format(e)))
-    #     print("Unexpected Error: {}".format(e))
+    
 
 
 
@@ -419,7 +447,7 @@ def setInfo(_platform, _infoType, _infoList, _path):
         else:
             global failCount
             failCount += 1
-            errorList.append(error(_path, "存在新增数据，请自行插入，数据已录入 notfound.xlsx", "NotFound"))
+            errorList.append(error(_path, "存在新增数据，请自行插入，数据已录入 notfound.xlsx", error.TYPE_NOTFOUND))
             processNotFoundInfo(_platform, _infoType, infoInstance)
 
         # 由于有合并表格的存在，插入一行真的极其的烦，功能后面在迭代吧，我不行了
@@ -435,9 +463,8 @@ def getInfoWithTime(_lastpath):
         _interval = (_endTime-_startTime).seconds
         print("\r文件已读取完成，用时 " + str(_interval) + " 秒")
 
-    except Exception as e:
-        errorList.append(error(_lastpath, "Unexpected Error: {}".format(e)))
-        print("Unexpected Error: {}".format(e))
+    except Exception:
+        processException()
         return "", "", []
         
     else:
@@ -450,7 +477,7 @@ def setInfoWithTime(_platform, _infoType, _infoList, _path):
 
     # ignore writing when info list is none
     if _infoList == []:
-        errorList.append(error(_path, "读取数据为空，注意检查", "Warning"))
+        errorList.append(error(_path, "读取数据为空，注意检查", error.TYPE_WARNING))
         print("读取数据为空，已跳过写入！！")
         return 
 
@@ -460,9 +487,8 @@ def setInfoWithTime(_platform, _infoType, _infoList, _path):
         _interval = (_endTime-_startTime).seconds
         print("数据已处理完成，用时 " + str(_interval) + " 秒\n")
 
-    except Exception as e:
-        errorList.append(error(_path, "Unexpected Error: {}".format(e)))
-        print("Unexpected Error: {}".format(e))
+    except Exception:
+        processException()
 
 
 def save(_fileName):
@@ -473,10 +499,9 @@ def save(_fileName):
         summary.save(path + "/" + _fileName + ".xlsx")
         notfound.save(path + "/notfound.xlsx")
 
-    except Exception as e:
-        errorList.append(error(path + '/' + _fileName + ".xlsx", "Unexpected Error: {}".format(e)))
+    except Exception:
+        processException()
         print("文件保存失败，请检查 " + _fileName + ".xlsx 或 notfound.xlsx 是否在打开状态。请关闭文件后重试！！！")
-        print("Unexpected Error: {}".format(e))
 
     else:
         print("保存文件成功，路径：" + path + "/" + _fileName + ".xlsx") 
@@ -517,7 +542,7 @@ def processDir(_filepath):
             else:
                 # ignore the temporary files
                 if "~$" in _file:
-                    errorList.append(error(_lastpath, "find \'~$\' in the file name, do use \'~$\' for file name in case we see it as temporary files", "Warning"))
+                    errorList.append(error(_lastpath, "find \'~$\' in the file name, do use \'~$\' for file name in case we see it as temporary files", error.TYPE_WARNING))
                     continue
 
                 platform, infoType, infoList = getInfoWithTime(_lastpath)
@@ -528,13 +553,14 @@ def openReport(_reportPath):
     print("正在读取汇总文件\r")
     try:
         _summary = load_workbook(_reportPath)
-    except Exception as e:
+    except Exception:
         print("读取汇总文件发生错误，可能汇总文件已被打开，请关闭文件后重试！！")
-        print("Unexpected Error: {}".format(e))
+        processException()
+        return None
     else:    
         print("汇总文件读取成功：" +  _reportPath + "\n")
+        return _summary
 
-    return _summary
 
 
 def printMessage(_type):
@@ -573,47 +599,49 @@ startTime = datetime.now()
 if reportPath is not None:
     # open the report
     summary = openReport(reportPath)
+    if summary is not None : 
 
-    # init notfound table
-    notfound = Workbook()
-    notfoundTable = notfound.active
-    initNotFoundTable()
+        # init notfound table
+        notfound = Workbook()
+        notfoundTable = notfound.active
+        initNotFoundTable()
 
-    #遍历文件夹
-    for file in files: 
-        filePath = path + '/' + file
-        #判断是否是文件夹
-        if osPath.isdir(filePath): 
-            processDir(filePath)
+        #遍历文件夹
+        for file in files: 
+            filePath = path + '/' + file
+            #判断是否是文件夹
+            if osPath.isdir(filePath): 
+                processDir(filePath)
 
-    processRefundInfo(refundPath)
+        processRefundInfo(refundPath)
 
-    # Declare a mutable object so that it can be pass via reference
-    user_input = [None]
+        # Declare a mutable object so that it can be pass via reference
+        user_input = [None]
 
-    mythread = Thread(target=get_user_input, args=(user_input,))
-    mythread.daemon = True
-    mythread.start()
+        mythread = Thread(target=get_user_input, args=(user_input,))
+        mythread.daemon = True
+        mythread.start()
 
-    for increment in range(0, 21):
-        sleep(1)
-        if user_input[0] is not None:
-            save(user_input[0])
-            break
-        # print ("\r输入文件名（直接回车或 ".format() + str(20 - increment) + " 秒后将使用默认文件名保存）：", end="")
+        for increment in range(0, 21):
+            sleep(1)
+            if user_input[0] is not None:
+                save(user_input[0])
+                break
+            # print ("\r输入文件名（直接回车或 ".format() + str(20 - increment) + " 秒后将使用默认文件名保存）：", end="")
 
-    if user_input[0] is None:
-        save("output")
+        if user_input[0] is None:
+            save("output")
 
     # print the error list
     print("\n操作过程有以下错误：")
-    errorCount = printMessage("Error")
+    errorCount = printMessage(error.TYPE_ERROR)
 
     print("\n操作过程有以下警告：")
-    warningCount = printMessage("Warning")
+    warningCount = printMessage(error.TYPE_WARNING)
 
     print("\n存在新增数据，请自行插入，数据已录入 notfound.xlsx")
-    warningCount += printMessage("NotFound")
+    acount = printMessage(error.TYPE_NOTFOUND)
+    warningCount += 1 if acount != 0 else 0
 
     endTime = datetime.now()
     interval = (endTime-startTime).seconds
