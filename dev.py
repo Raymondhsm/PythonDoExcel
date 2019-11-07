@@ -77,10 +77,14 @@ def processException():
     # send error
     errorList.append(error(filename,'APPLICATION EXCEPTION (LINE {} "{}"): {}'.format(lineno, line.strip(), exc_obj)))
     print('APPLICATION EXCEPTION (LINE {} "{}"): {}'.format(lineno, line.strip(), exc_obj))
+
+    # stop the system and exit
+    system("pause")
+    exit()
     
 
 
-def getReportPath(path, _files, _onlyXlsx = True):
+def getReportPath(path, _files, _tips, _onlyXlsx = True):
     _count = 0
     _pathList = []
 
@@ -102,19 +106,20 @@ def getReportPath(path, _files, _onlyXlsx = True):
 
     # do not find file
     if _count == 0:
+        errorList.append(error("./", "do not find files", error.TYPE_ERROR))
         print("do not find files")
         return None
 
     # warning find .xls file
     if _isXls:
         errorList.append(error("./", "We have found .xls file in report list", error.TYPE_WARNING))
-        print("We have found .xls file, but the software can not read the .xls as report table!!!")
+        print("We have found .xls file, but the software can not read the .xls as report table!")
         print("Please convert it into .xlsx file, if you want to read it!!!")
 
     # input file number
     _index = 0
     while _index <= 0 or _index > _count:
-        _input = input("input number to choose summary file:")
+        _input = input("input number to choose "+ _tips +" file:")
         if _input == "" or not _input.isdigit():
             continue
         
@@ -122,54 +127,69 @@ def getReportPath(path, _files, _onlyXlsx = True):
         if _index <= 0 or _index > _count:
             print("wrong number\n")
     
+    # output \n
+    print("\n")
+    
     return _pathList[_index - 1]
 
 
 def findPlatformIndex(_reportTable, _platform):
-    # store the merge cell's info
-    mergeList = _reportTable.merged_cells
-    mergeDict = {}
-    for mergeCell in mergeList:
-        mergeDict[mergeCell.min_row] = mergeCell.max_row - mergeCell.min_row
+    try:
+        # store the merge cell's info
+        mergeList = _reportTable.merged_cells
+        mergeDict = {}
+        for mergeCell in mergeList:
+            mergeDict[mergeCell.min_row] = mergeCell.max_row - mergeCell.min_row
 
-    # to find the index of platform
-    isFindPlatform = False
-    index = 1
-    while index < _reportTable.max_row:
-        _reportPlatform = _reportTable["C" + str(index)].value
-        if _reportPlatform is None:
-            index += 1
-            continue
-        _reportPlatform = _reportPlatform if not _reportPlatform.strip().isalpha() else _reportPlatform.lower()
-        if _reportPlatform.strip() == _platform.strip().lower():
-            isFindPlatform = True
-            break
-        else :
-            if mergeDict.get(index) != None:
-                index += mergeDict.get(index) + 1
+        # to find the index of platform
+        isFindPlatform = False
+        index = 1
+        while index < _reportTable.max_row:
+            _reportPlatform = _reportTable["C" + str(index)].value
+            if _reportPlatform is None:
+                index += 1
+                continue
+            _reportPlatform = _reportPlatform if not _reportPlatform.strip().isalpha() else _reportPlatform.lower()
+            if _reportPlatform.strip() == _platform.strip().lower():
+                isFindPlatform = True
+                break
             else :
-                index +=1
+                if mergeDict.get(index) != None:
+                    index += mergeDict.get(index) + 1
+                else :
+                    index +=1
 
-    offset = mergeDict[index] + 1 if index in mergeDict else 1
-
-    if isFindPlatform:
-        return index, offset
-    else:
+        offset = mergeDict[index] + 1 if index in mergeDict else 1
+    
+    except Exception:
+        processException()
         return -1, 0
+
+    else:
+        if isFindPlatform:
+            return index, offset
+        else:
+            return -1, 0
 
 
 def processRefundNotFound(_infoType, _platform, _refundAccount, _refundLocation, _refund):
 
-    # find the account and location in the notfound table
-    for _row in range(2, notfoundTable.max_row + 1):
-        _nfType = notfoundTable["A" + str(_row)].value
-        _nfPlatform = notfoundTable["B" + str(_row)].value
-        _nfAccount = notfoundTable["C" + str(_row)].value
-        _nfLocation = notfoundTable["E" + str(_row)].value.split(' ')[1]
+    try:
+        # find the account and location in the notfound table
+        for _row in range(2, notfoundTable.max_row + 1):
+            _nfType = notfoundTable["A" + str(_row)].value
+            _nfPlatform = notfoundTable["B" + str(_row)].value
+            _nfAccount = notfoundTable["C" + str(_row)].value
+            _nfLocation = notfoundTable["E" + str(_row)].value.split(' ')[1]
 
-        if _infoType == _nfType and _platform == _nfPlatform and _refundAccount == _nfAccount and _refundLocation == _nfLocation:
-            notfoundTable["H" + str(_row)] = _refund
-            return
+            if _infoType == _nfType and _platform == _nfPlatform and _refundAccount == _nfAccount and _refundLocation == _nfLocation:
+                notfoundTable["H" + str(_row)] = _refund
+                return
+
+    except Exception:
+        processException()
+        return
+
 
     # if do not be found, we insert and send warning
     _row = notfoundTable.max_row + 1
@@ -278,7 +298,7 @@ def setRefundInfo(_infoType,  _refundInfoList):
                 accountDict[_account + '_' + _location] = _row
 
             # process the refund
-            for _refundIndex in range(0, _refundInstance.length1):
+            for _refundIndex in range(0, _refundInstance.length):
                 _refundAccount, _refundLocation, _refund = _refundInstance.get(_refundIndex)
 
                 if _refundAccount + '_' + _refundLocation in accountDict:
@@ -304,78 +324,81 @@ def processRefundInfo(_filePath):
     for _refundsheet in _refundSheets:
         _infoType = _refundsheet.name
 
-        print("正在处理 " + _refundsheet.name + " 退款金额...")
+        print("正在处理 " + _infoType + " 退款金额...")
 
         _refundInfoList = getRefundInfo(_refundsheet)
         setRefundInfo(_infoType, _refundInfoList)
     
 
-
-
 def getInfoByXlrd(filePath):
-    # open the file
-    data = open_workbook(filePath)
+    try:
+        # open the file
+        data = open_workbook(filePath)
 
-    # to store this file data which _platform and type is
-    _platform = data.sheet_by_index(0).cell_value(1,0).split('/')[0]
-    _infoType = data.sheet_by_index(0).cell_value(1,1).split('/',2)[1]
+        # to store this file data which _platform and type is
+        _platform = data.sheet_by_index(0).cell_value(1,0).split('/')[0]
+        _infoType = data.sheet_by_index(0).cell_value(1,1).split('/',2)[1]
 
-    # use info list to temporary store data 
-    _infoList = []
+        # use info list to temporary store data 
+        _infoList = []
 
-    # for each table to process data
-    sheets = data.sheets()
-    for table in sheets:
-        # ignore the sheet of "原始"
-        if table.name == "原始":
-            continue
-
-        _row = 1
-        nrow = table.nrows
-
-        # for each module to find out useful info
-        while _row < nrow:
-            # if find the none row, add 1 to row for finding the next
-            if table.cell(_row,1).value == "":
-                _row += 1
+        # for each table to process data
+        sheets = data.sheets()
+        for table in sheets:
+            # ignore the sheet of "原始"
+            if table.name == "原始":
                 continue
 
-            # if account is none, the wo think the line is bad
-            row_3List = table.cell(_row,2).value.split('/')
-            if row_3List[0] == "" or is_contains_chinese(row_3List[0]):
-                _row += 1
-                continue
+            _row = 1
+            nrow = table.nrows
 
-            # create the module info instance
-            _infoInstance = info()
+            # for each module to find out useful info
+            while _row < nrow:
+                # if find the none row, add 1 to row for finding the next
+                if table.cell(_row,1).value == "":
+                    _row += 1
+                    continue
 
-            # to process the account/location cell
-            _infoInstance.account = row_3List[0]
-            _infoInstance.location = row_3List[1] if not is_contains_chinese(row_3List[1]) else row_3List[1][0:-1]
+                # if account is none, the wo think the line is bad
+                row_3List = table.cell(_row,2).value.split('/')
+                if row_3List[0] == "" or is_contains_chinese(row_3List[0]):
+                    _row += 1
+                    continue
 
-            # if cell has no name, then wo think this line is bad 
-            _nameInTable = table.cell(_row,1).value.split('/',2)
-            _infoInstance.name = "/" if _nameInTable[0] == "" else _nameInTable[0]
-            if _infoType == "类": _infoType = _nameInTable[1]
-    
-            # to judge this module is normal or not
-            row_4 = table.cell(_row,3).value
-            if row_4 == "":
-                _infoInstance.normal = False
-                _infoInstance.salesAmount = table.cell(_row,4).value
-            else :
-                _infoInstance.salesAmount = row_4
-                _infoInstance.profitRate = table.cell(_row+1,4).value
+                # create the module info instance
+                _infoInstance = info()
 
-            # append the module instance into the list
-            _infoList.append(_infoInstance)
+                # to process the account/location cell
+                _infoInstance.account = row_3List[0]
+                _infoInstance.location = row_3List[1] if not is_contains_chinese(row_3List[1]) else row_3List[1][0:-1]
 
-            # add 3 to variable _row to move to next module 
-            _row += 2
+                # if cell has no name, then wo think this line is bad 
+                _nameInTable = table.cell(_row,1).value.split('/',2)
+                _infoInstance.name = "/" if _nameInTable[0] == "" else _nameInTable[0]
+                if _infoType == "类": _infoType = _nameInTable[1]
+        
+                # to judge this module is normal or not
+                row_4 = table.cell(_row,3).value
+                if row_4 == "":
+                    _infoInstance.normal = False
+                    _infoInstance.salesAmount = table.cell(_row,4).value
+                else :
+                    _infoInstance.salesAmount = row_4
+                    _infoInstance.profitRate = table.cell(_row+1,4).value
 
-    data.release_resources()
-    if _infoType == "C类" : _infoType += ("打底裤")
-    return _platform, _infoType, _infoList
+                # append the module instance into the list
+                _infoList.append(_infoInstance)
+
+                # add 3 to variable _row to move to next module 
+                _row += 2
+
+        data.release_resources()
+
+    except Exception:
+        processException()
+        return "", "", []
+    else :
+        return _platform, _infoType, _infoList
 
 
 def processNotFoundInfo(_platform, _infoType, _infoInstance):
@@ -397,60 +420,63 @@ def processNotFoundInfo(_platform, _infoType, _infoInstance):
 
 
 def setInfo(_platform, _infoType, _infoList, _path):
-    # find the infotype table
-    if _infoType not in summary.sheetnames:
-        errorList.append(error(_path,"can not find correct sheet: " + _infoType))
-        return 
-    reportTable = summary[_infoType]
+    try:
+        # find the infotype table
+        if _infoType not in summary.sheetnames:
+            errorList.append(error(_path,"can not find correct sheet: " + _infoType))
+            return 
+        reportTable = summary[_infoType]
 
-    # to find the index of platform
-    index, offset = findPlatformIndex(reportTable, _platform)
-    if index == -1:
-        errorList.append(error(_path, "can not find correct platform: " + _platform))
-        return
+        # to find the index of platform
+        index, offset = findPlatformIndex(reportTable, _platform)
+        if index == -1:
+            errorList.append(error(_path, "can not find correct platform: " + _platform))
+            return
 
-    # for each data in infoList to write down in the report
-    for infoInstance in _infoList:
-        isFind = False      # to mark the account is finded or not
+        # for each data in infoList to write down in the report
+        for infoInstance in _infoList:
+            isFind = False      # to mark the account is finded or not
 
-        for row in range(index, index + offset):
-            reportAccount = reportTable["D" + str(row)].value
-            reportLocationList = reportTable["F" + str(row)].value.split(' ')
-            reportLocation = reportLocationList[1] if len(reportLocationList) > 1 else reportLocationList[0]
+            for row in range(index, index + offset):
+                reportAccount = reportTable["D" + str(row)].value
+                reportLocationList = reportTable["F" + str(row)].value.split(' ')
+                reportLocation = reportLocationList[1] if len(reportLocationList) > 1 else reportLocationList[0]
 
-            # to match corret account and location row
-            if infoInstance.account == reportAccount and infoInstance.location == reportLocation :
-                isFind = True
-                global correctCount
-                correctCount += 1
+                # to match corret account and location row
+                if infoInstance.account == reportAccount and infoInstance.location == reportLocation :
+                    isFind = True
+                    global correctCount
+                    correctCount += 1
 
-                # if the name is wrong, then change the name 
-                reportName = reportTable["E" + str(row)].value
-                if infoInstance.name !=  reportName : 
-                    reportTable["E" + str(row)].value = infoInstance.name
-                    reportTable["F" + str(row)].value = infoInstance.name + " " + infoInstance.location
+                    # if the name is wrong, then change the name 
+                    reportName = reportTable["E" + str(row)].value
+                    if infoInstance.name !=  reportName : 
+                        reportTable["E" + str(row)].value = infoInstance.name
+                        reportTable["F" + str(row)].value = infoInstance.name + " " + infoInstance.location
 
-                # to judge the normal is true or not
-                if infoInstance.normal :
-                    # if normal, then write down the salesAmount and profitRate
-                    reportTable["G" + str(row)].value = infoInstance.salesAmount
-                    reportTable["H" + str(row)].value = infoInstance.profitRate
-                else :
-                    # else write down the margin 
-                    reportTable["J" + str(row)].value = infoInstance.salesAmount
+                    # to judge the normal is true or not
+                    if infoInstance.normal :
+                        # if normal, then write down the salesAmount and profitRate
+                        reportTable["G" + str(row)].value = infoInstance.salesAmount
+                        reportTable["H" + str(row)].value = infoInstance.profitRate
+                    else :
+                        # else write down the margin 
+                        reportTable["J" + str(row)].value = infoInstance.salesAmount
 
-                # write down and break the for loop
-                break
+                    # write down and break the for loop
+                    break
 
-        if isFind:
-            continue
-        else:
-            global failCount
-            failCount += 1
-            errorList.append(error(_path, "存在新增数据，请自行插入，数据已录入 notfound.xlsx", error.TYPE_NOTFOUND))
-            processNotFoundInfo(_platform, _infoType, infoInstance)
+            if isFind:
+                continue
+            else:
+                global failCount
+                failCount += 1
+                errorList.append(error(_path, "存在新增数据，请自行插入，数据已录入 notfound.xlsx", error.TYPE_NOTFOUND))
+                processNotFoundInfo(_platform, _infoType, infoInstance)
 
-        # 由于有合并表格的存在，插入一行真的极其的烦，功能后面在迭代吧，我不行了
+            # 由于有合并表格的存在，插入一行真的极其的烦，功能后面在迭代吧，我不行了
+    except Exception:
+        processException()
 
         
 def getInfoWithTime(_lastpath):
@@ -580,7 +606,7 @@ def printMessage(_type):
 
 
 #文件夹目录
-path = "../data/"
+path = "../data"
 #得到文件夹下的所有文件名称
 files= listdir(path) 
 
@@ -590,8 +616,8 @@ correctCount = 0
 failCount = 0
 
 # open report to write down
-reportPath = getReportPath(path, files)
-refundPath = getReportPath(path, files, _onlyXlsx = False)
+reportPath = getReportPath(path, files, "summary")
+refundPath = getReportPath(path, files, "refund", _onlyXlsx = False)
 
 # start timer
 startTime = datetime.now()
