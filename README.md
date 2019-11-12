@@ -11,8 +11,8 @@
         项目用到的库基本在python的自带的库中，包括xlrd， openpyxl
     
         但打包时使用pipenv进行创建虚拟环境，并使用pyinstaller来对python脚本打包成EXE文件。
-
-        这里还是提醒一下，注意一下要用这个程序的人的电脑是32位还是64位的，来选择一下使用python的版本。一开始我没注意，使用64位的python打包了exe，在我姐32位的电脑不兼容。最后32位和64位python环境共存也没搞好，就直接把64位卸载重装32位的了，难受。（有人会告诉我一声！！！
+    
+        这里还是提醒一下，注意一下要用这个程序的人的电脑是32位还是64位的，来选择一下使用python的版本。一开始我没注意，使用64位的python打包了exe，在我姐32位的电脑不兼容。最后32位和64位python环境共存也没搞好，就直接把64位卸载重装32位的了，难受。（有人会告诉我一声！！！
 
 #### 
 
@@ -35,7 +35,6 @@
   
   ```python
   table = data.sheets()[0]          # 通过索引顺序获取
-  ```
   
   table = data.sheet_by_index(sheet_indx)) # 通过索引顺序获取
   
@@ -44,29 +43,23 @@
   names = data.sheet_names()    # 返回book中所有工作表的名字
   
   data.sheet_loaded(sheet_name or indx)   # 检查某个sheet是否导入完毕
-
-```
+  ```
 
 - `sheet`的行操作
-
+  
   ```python
   nrows = table.nrows  # 获取该sheet中的有效行数
-
-
+  
   table.row(rowx)  # 返回由该行中所有的单元格对象组成的列表
-
-
+  
   table.row_slice(rowx)  # 返回由该列中所有的单元格对象组成的列表
-
-
+  
   table.row_types(rowx, start_colx=0, end_colx=None)    # 返回由该行中所有单元格的数据类型组成的列表
-
-
+  
   table.row_values(rowx, start_colx=0, end_colx=None)   # 返回由该行中所有单元格的数据组成的列表
-
-
+  
   table.row_len(rowx) # 返回该列的有效单元格长度
-```
+  ```
 
 - `sheet`的列操作
   
@@ -87,6 +80,15 @@
   ```python
   table.cell(row,col)   # 返回对应的单元格对象
   table.cell_value(row,col)    # 返回对应单元格对象的值
+  ```
+
+- `sheet`获取合并表格
+  
+  > 这个地方还是有个坑的吧，如果你在打开表格的时候不把formatting_info属性设为True的话，是获取不到合并单元格的信息的
+  
+  ```python
+  _refundTable.merged_cells    # 获取合并单元格的列表
+  rs, re, cs, ce = merge        # 开始行结束行，开始列结束列信息
   ```
 
 ### 

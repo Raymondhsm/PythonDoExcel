@@ -418,7 +418,6 @@ def processNotFoundInfo(_platform, _infoType, _infoInstance):
         notfoundTable["I" + str(_row)].value = _infoInstance.salesAmount
 
 
-
 def setInfo(_platform, _infoType, _infoList, _path):
     try:
         # find the infotype table
