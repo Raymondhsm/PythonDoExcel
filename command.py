@@ -1,4 +1,5 @@
 from error import ErrorList, Error, Warning, processException
+import sys
 from xlrd import open_workbook
 from openpyxl import load_workbook,Workbook
 import profit
@@ -11,6 +12,8 @@ def doCommand():
     while True:
         # split the command and remove the none
         cmdLine = input("(self)>>>")
+        if cmdLine == "" : continue
+
         cmdList = cmdLine.strip().split(" ")
         for cmdIteration in cmdList:
             if cmdIteration == '' : cmdList.remove(cmdIteration)
@@ -80,7 +83,7 @@ def doCommand():
                 PF.save()
 
         # print
-        ErrorList.printErrorList()
+        if len(result) != 0 : ErrorList.printErrorList()
 
 
 def printVersion():
@@ -115,7 +118,7 @@ pathArguDict = {
 systemArguDict = {
     "-v" : printVersion,
     "-help" : printHelp,
-    "-exit" : exit
+    "-exit" : sys.exit
 }
 
 
