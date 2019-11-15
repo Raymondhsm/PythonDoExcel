@@ -10,15 +10,21 @@ class ErrorList:
 
     @classmethod
     def printErrorList(ErrorList):
-        print("\n操作过程有以下错误：")
+        if len(ErrorList.__errorList) != 0 :
+            print("\n操作过程有以下错误：")
+        else:
+            print("\n恭喜！！操作过程无错误")
         for _error in ErrorList.__errorList:
             _error.printInfo()
 
-        print("\n操作过程有以下警告：")
+        if len(ErrorList.__warningList) != 0 :
+            print("\n操作过程有以下警告：")
+        else:
+            print("\n恭喜！！操作过程无警告")
         for _warning in ErrorList.__warningList:
             _warning.printInfo()
 
-        print("\n存在新增数据，请自行插入，数据已录入 notfound.xlsx")
+        if len(ErrorList.__notFoundList) != 0 : print("\n存在新增数据，请自行插入，数据已录入 notfound.xlsx")
         for _notfound in ErrorList.__notFoundList:
             _notfound.printInfo()
         
