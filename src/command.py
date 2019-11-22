@@ -5,6 +5,7 @@ from openpyxl import load_workbook,Workbook
 import profit
 import saleAmount
 import refund
+import utils
 
 
 def doCommand():
@@ -46,9 +47,8 @@ def doCommand():
             try:
                 summary = load_workbook(result["summaryPath"])
                 
-                if "notfoundPath" in result:
-                    notfoundBook = load_workbook(result["notfoundPath"])
-                    notfoundTable = notfoundBook[notfoundBook.sheetnames[0]]
+                notfoundPath = result["notfoundTable"] if "notfoundPath" in result else ""
+                notfoundTable = utils.createNotFoundTable(notfoundPath)
             except:
                 processException()
 
@@ -60,13 +60,16 @@ def doCommand():
             RF = refund.Refund(summary,notfoundTable)
             RF.processRefundInfo(result["refundPath"])
 
+            # save file
+            savePath = result["savePath"] if "savePath" in result else "summary.xlsx"
+            summary.save(savePath)
+
         elif "salePath" in result and "summaryPath" in result and "refundPath" not in result:
             try:
                 summary = load_workbook(result["summaryPath"])
                 
-                if "notfoundPath" in result:
-                    notfoundBook = load_workbook(result["notfoundPath"])
-                    notfoundTable = notfoundBook[notfoundBook.sheetnames[0]]
+                notfoundPath = result["notfoundTable"] if "notfoundPath" in result else ""
+                notfoundTable = utils.createNotFoundTable(notfoundPath)
             except:
                 processException()
 
@@ -74,13 +77,16 @@ def doCommand():
             RF = refund.Refund(summary,notfoundTable)
             RF.processRefundInfo(result["refundPath"])
 
+            # save file
+            savePath = result["savePath"] if "savePath" in result else "summary.xlsx"
+            summary.save(savePath)
+
         elif "originPath" in result and "updatePath" in result:
             PF = profit.Profit(result["originPath"],result["updatePath"])
             PF.processProfitUpdate()
-            if "savePath" in result:
-                PF.save(result["savePath"])
-            else:
-                PF.save()
+
+            savePath = result["savePath"] if "savePath" in result else ""
+            PF.save(savePath)
 
         # print
         if len(result) != 0 : ErrorList.printErrorList()
