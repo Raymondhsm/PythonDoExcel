@@ -1,5 +1,5 @@
 from error import ErrorList, Error, Warning, processException
-from os import path as osPath
+from os import path as osPath, listdir,system
 from openpyxl import Workbook,load_workbook
 
 def is_contains_chinese(strs):
@@ -9,12 +9,13 @@ def is_contains_chinese(strs):
     return False
 
 
-def getReportPath(path, _files, _tips, onlyXlsx = True, canSkip = False):
+def getReportPath(path, _tips, onlyXlsx = True, canSkip = False):
     _count = 0
     _pathList = []
 
     _isXls = False
 
+    _files = listdir(path)
     # print file list
     for _file in _files:
         # 去除文件夹，非.xlsx文件以及临时文件
