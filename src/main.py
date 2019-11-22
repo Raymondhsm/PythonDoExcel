@@ -15,4 +15,7 @@ if mode == "":
 else:
     command.doCommand()
 
+
+
+
 system("pause")

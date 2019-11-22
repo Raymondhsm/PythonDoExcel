@@ -19,7 +19,7 @@ def doCommand():
             if cmdIteration == '' : cmdList.remove(cmdIteration)
 
         # we have no different cmd now, so ignore it
-        cmd = cmdList[0]
+        # cmd = cmdList[0]
 
         index = 1
         result = {}
