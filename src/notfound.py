@@ -18,14 +18,15 @@ class NotFound:
     def getNotfoundTable(self):
         try:
             if len(self.notfoundBook.sheetnames) == 0:
-                notfoundTable = self.notfoundBook.active()
-                __initNotFoundTable(notfoundTable)
+                notfoundTable = self.notfoundBook.active
+                self.__initNotFoundTable(notfoundTable)
             else:
-                notfoundTable = notfoundBook[notfoundBook.sheetnames[0]]
+                notfoundTable = self.notfoundBook[self.notfoundBook.sheetnames[0]]
             
             return notfoundTable
         except:
             processException()
+
 
     def save(self, notfoundOutPath = ""):
         if notfoundOutPath == "":
