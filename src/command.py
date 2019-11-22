@@ -6,6 +6,7 @@ import profit
 import saleAmount
 import refund
 import utils
+import notfound
 
 
 def doCommand():
@@ -46,11 +47,13 @@ def doCommand():
         if "salePath" in result and "summaryPath" in result and "refundPath" in result:
             try:
                 summary = load_workbook(result["summaryPath"])
-                
-                notfoundPath = result["notfoundTable"] if "notfoundPath" in result else ""
-                notfoundTable = utils.createNotFoundTable(notfoundPath)
             except:
                 processException()
+
+            # get the notfound table
+            notfoundPath = result["notfoundTable"] if "notfoundPath" in result else ""
+            NF = notfound.NotFound(notfoundPath)
+            notfoundTable = NF.getNotfoundTable()
 
             # process salesAmount
             SA = saleAmount.SaleAmount(summary, notfoundTable)
@@ -63,15 +66,37 @@ def doCommand():
             # save file
             savePath = result["savePath"] if "savePath" in result else "summary.xlsx"
             summary.save(savePath)
+            NF.save()
 
         elif "salePath" in result and "summaryPath" in result and "refundPath" not in result:
             try:
                 summary = load_workbook(result["summaryPath"])
-                
-                notfoundPath = result["notfoundTable"] if "notfoundPath" in result else ""
-                notfoundTable = utils.createNotFoundTable(notfoundPath)
             except:
                 processException()
+
+            # get the notfound table
+            notfoundPath = result["notfoundTable"] if "notfoundPath" in result else ""
+            NF = notfound.NotFound(notfoundPath)
+            notfoundTable = NF.getNotfoundTable()
+
+            # process salesAmount
+            SA = saleAmount.SaleAmount(summary, notfoundTable)
+            SA.processDir(result["salePath"])
+
+            # save file
+            savePath = result["savePath"] if "savePath" in result else "summary.xlsx"
+            summary.save(savePath)
+
+        elif "summaryPath" in result and "refundPath" in result:
+            try:
+                summary = load_workbook(result["summaryPath"])
+            except:
+                processException()
+
+            # get the notfound table
+            notfoundPath = result["notfoundTable"] if "notfoundPath" in result else ""
+            NF = notfound.NotFound(notfoundPath)
+            notfoundTable = NF.getNotfoundTable()
 
             # process refund
             RF = refund.Refund(summary,notfoundTable)
@@ -80,6 +105,7 @@ def doCommand():
             # save file
             savePath = result["savePath"] if "savePath" in result else "summary.xlsx"
             summary.save(savePath)
+            
 
         elif "originPath" in result and "updatePath" in result:
             PF = profit.Profit(result["originPath"],result["updatePath"])
