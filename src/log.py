@@ -9,6 +9,10 @@ class Log:
         logstr = "[ {} ]: {}".format(self.date, self.message)
         print(logstr)
 
+    def toString(self):
+        logstr = "[ {} ]: {}".format(self.date, self.message)
+        return logstr
+
 
 class Logger:
 
@@ -38,5 +42,12 @@ class Logger:
     def printLog(logger):
         for log in logger.__logList:
             log.printLog()
+
+    @classmethod
+    def writeLog(logger):
+        file = open("./log.txt","w")
+        for log in logger.__logList:
+            file.write(log.toString() + '\n')
+        file.close()
 
 
