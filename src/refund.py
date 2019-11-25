@@ -78,6 +78,8 @@ class Refund:
 
                 _row = re + 1 if _refundTable.cell_value(re,cs) == "账号" else re
                 while True: 
+                    if _row >= _refundTable.nrows: 
+                        break
                     _acclo = _refundTable.cell_value(_row,cs)
 
                     if _acclo == "":

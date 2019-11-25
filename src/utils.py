@@ -58,8 +58,6 @@ def getReportPath(path, _tips, onlyXlsx = True, canSkip = False):
     # warning find .xls file
     if _isXls:
         ErrorList.addError(Warning("./", "We have found .xls file in report list"))
-        print("We have found .xls file, but the software can not read the .xls as report table!")
-        print("Please convert it into .xlsx file, if you want to read it!!!")
 
     # input file number
     _index = 0

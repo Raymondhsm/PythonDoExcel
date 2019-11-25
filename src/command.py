@@ -35,9 +35,9 @@ def doCommand():
                     Logger.addLog("DATA NONE: " + cmdList[index-1])
                     print("data none!!" + cmdList[index-1])
                     break
-                elif not utils.is_excel_file(cmdList[index]):
+                elif cmdList[index-1] != "-sa" and not utils.is_excel_file(cmdList[index]):
                     Logger.addLog("DATA ERROR, NOT EXCEL FILE : " + cmdList[index-1])
-                    print("data ERROR!!NOT EXCEL FILE!!" + cmdList[index-1])
+                    print("DATA ERROR!!NOT EXCEL FILE!!" + cmdList[index-1])
                     break
                 else:
                     Logger.addLog("COMMAND: {}, DATA: {}".format(cmdList[index-1], cmdList[index]))
@@ -121,7 +121,7 @@ def doCommand():
 
 
 def printVersion():
-    print("6.0 By XiaoMing \n")
+    print("7.0 By XiaoMing \n")
 
 def printHelp():
     for pa in pathArguDict.keys():
@@ -151,8 +151,8 @@ pathArguDict = {
 
 systemArguDict = {
     "-v" : printVersion,
-    "-help" : printHelp,
-    "-exit" : sys.exit
+    "help" : printHelp,
+    "exit" : sys.exit
 }
 
 

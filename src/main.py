@@ -12,12 +12,12 @@ mode = input("输入点东西就进入命令行模式，啥也不输就进入引
 
 if mode == "":
     Logger.addLog("输入：{}，进入引导模式。".format(mode))
-    guide.doGuide("./")
+    guide.doGuide("../data")
 else:
     Logger.addLog("输入：{}，进入命令模式。".format(mode))
     command.doCommand()
 
 
 
-
+Logger.writeLog()
 system("pause")

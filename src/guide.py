@@ -21,6 +21,7 @@ def __doSA(path = "./"):
 
     _summaryPath = utils.getReportPath(path, "summary")
     try:
+        print("正在打开汇总表...")
         _summary = load_workbook(_summaryPath)
     except:
         processException()
@@ -45,9 +46,9 @@ def __doSA(path = "./"):
     # 保存文件
     _summaryName = input("输点什么东西当输出文件名呗：")
     if _summaryName == "":
-        _summary.save("summary.xlsx")
+        _summary.save(path + "/summary.xlsx")
     else:
-        _summary.save(_summaryName)
+        _summary.save(path+ "/" + _summaryName)
     Logger.addPrefabLog(Logger.LOG_TYPE_SAVE,_summaryName)
 
     NF.save()
@@ -64,7 +65,7 @@ def __doPF(path = "./"):
 
 
 def doGuide(path = "./"):
-    option = input("输入点东西就进入更新成本功能\n什么都不输就进入更新汇总表功能：")
+    option = input("输入点东西就进入更新成本功能,什么都不输就进入更新汇总表功能：")
     if option == "":
         Logger.addLog("输入：{}，处理saleAmount。".format(option))
         __doSA(path)

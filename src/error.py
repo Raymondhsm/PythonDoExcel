@@ -78,7 +78,7 @@ class Error(ErrorBase):
         print("PATH: " + self.path + "\n")
 
     def toString(self):
-        string = "ERROR: Massage: {}\n\t Path:{}".format(self.message, self.path)
+        string = "ERROR: Massage: {}\t Path:{}".format(self.message, self.path)
         return string
 
 
@@ -92,7 +92,7 @@ class Warning(ErrorBase):
         print("PATH: " + self.path + "\n")
 
     def toString(self):
-        string = "WARNING: Massage: {}\n\t Path:{}".format(self.message, self.path)
+        string = "WARNING: Massage: {}\t Path:{}".format(self.message, self.path)
         return string
 
 
@@ -105,7 +105,7 @@ class NotFound(ErrorBase):
         print("PATH: " + self.path)
     
     def toString(self):
-        string = "NOTFOUND: Massage: {}\n\t Path:{}".format(self.message, self.path)
+        string = "NOTFOUND: Massage: {}\t Path:{}".format(self.message, self.path)
         return string
 
 
@@ -119,7 +119,9 @@ def processException():
 
     # send error
     ErrorList.addError(Error(filename,'APPLICATION EXCEPTION (LINE {} "{}"): {}'.format(lineno, line.strip(), exc_obj)))
-    print('APPLICATION EXCEPTION (LINE {} "{}"): {}'.format(lineno, line.strip(), exc_obj))
+    print('APPLICATION EXCEPTION ({} LINE {} "{}"): {}'.format(filename, lineno, line.strip(), exc_obj))
+
+    Logger.writeLog()
 
     # stop the system and exit
     system("pause")
