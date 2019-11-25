@@ -51,8 +51,8 @@ def doCommand():
                 break
         
         # 处理金额和退款
-        if "salePath" in result and "summaryPath" in result and "refundPath" in result:
-            Logger.addLog("process SA with RF")
+        if "salePath" in result and "summaryPath" in result:
+            Logger.addLog("process SA ")
             try:
                 summary = load_workbook(result["summaryPath"])
             except:
@@ -67,9 +67,11 @@ def doCommand():
             SA = saleAmount.SaleAmount(summary, notfoundTable)
             SA.processDir(result["salePath"])
 
-            # process refund
-            RF = refund.Refund(summary,notfoundTable)
-            RF.processRefundInfo(result["refundPath"])
+            if "refundPath" in result:
+                # process refund
+                Logger.addLog("process RF ")
+                RF = refund.Refund(summary,notfoundTable)
+                RF.processRefundInfo(result["refundPath"])
 
             # save file
             savePath = result["savePath"] if "savePath" in result else "summary.xlsx"
@@ -77,29 +79,9 @@ def doCommand():
             Logger.addPrefabLog(Logger.LOG_TYPE_SAVE,savePath)
             NF.save()
 
-        # 处理金额
-        elif "salePath" in result and "summaryPath" in result and "refundPath" not in result:
-            try:
-                summary = load_workbook(result["summaryPath"])
-            except:
-                processException()
-
-            # get the notfound table
-            notfoundPath = result["notfoundTable"] if "notfoundPath" in result else ""
-            NF = notfound.NotFound(notfoundPath)
-            notfoundTable = NF.getNotfoundTable()
-
-            # process salesAmount
-            SA = saleAmount.SaleAmount(summary, notfoundTable)
-            SA.processDir(result["salePath"])
-
-            # save file
-            savePath = result["savePath"] if "savePath" in result else "summary.xlsx"
-            Logger.addPrefabLog(Logger.LOG_TYPE_SAVE,savePath)
-            summary.save(savePath)
-
         # 处理退款
         elif "summaryPath" in result and "refundPath" in result:
+            Logger.addLog("process RF ")
             try:
                 summary = load_workbook(result["summaryPath"])
             except:
@@ -117,11 +99,13 @@ def doCommand():
             # save file
             savePath = result["savePath"] if "savePath" in result else "summary.xlsx"
             summary.save(savePath)
+            NF.save()
             Logger.addPrefabLog(Logger.LOG_TYPE_SAVE,savePath)
             
 
         # 更新成本
         elif "originPath" in result and "updatePath" in result:
+            Logger.addLog("process PF ")
             PF = profit.Profit(result["originPath"],result["updatePath"])
             PF.processProfitUpdate()
 
