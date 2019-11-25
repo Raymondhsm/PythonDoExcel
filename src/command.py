@@ -32,8 +32,12 @@ def doCommand():
             if cmdList[index] in pathArguDict:
                 index += 1
                 if index >= len(cmdList):
-                    Logger.addLog("DATA ERROR: " + cmdList[index-1])
+                    Logger.addLog("DATA NONE: " + cmdList[index-1])
                     print("data none!!" + cmdList[index-1])
+                    break
+                elif not utils.is_excel_file(cmdList[index]):
+                    Logger.addLog("DATA ERROR, NOT EXCEL FILE : " + cmdList[index-1])
+                    print("data ERROR!!NOT EXCEL FILE!!" + cmdList[index-1])
                     break
                 else:
                     Logger.addLog("COMMAND: {}, DATA: {}".format(cmdList[index-1], cmdList[index]))
