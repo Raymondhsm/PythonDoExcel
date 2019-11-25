@@ -1,6 +1,7 @@
 import command
 import guide
 from log import Logger
+from error import ErrorList
 from os import system
 
 
@@ -18,6 +19,6 @@ else:
     command.doCommand()
 
 
-
+ErrorList.printErrorList()
 Logger.writeLog()
 system("pause")
