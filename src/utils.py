@@ -1,4 +1,5 @@
 from error import ErrorList, Error, Warning, processException
+from log import Logger
 from os import path as osPath, listdir,system
 from openpyxl import Workbook,load_workbook
 
@@ -7,6 +8,24 @@ def is_contains_chinese(strs):
         if '\u4e00' <= _char <= '\u9fa5':
             return True
     return False
+
+
+def is_xlsx_file(path):
+    lastlist = path.split('.')
+    if len(lastlist) <= 1:
+        return False
+    else:
+        last = lastlist[len(lastlist)-1]
+        if last == "xlsx" :
+            return True
+        else:
+            return False
+
+def is_xls_file(path):
+    return is_xlsx_file(path + 'x')
+
+def is_excel_file(path):
+    return is_xls_file(path) or is_xlsx_file(path)
 
 
 def getReportPath(path, _tips, onlyXlsx = True, canSkip = False):
@@ -61,6 +80,7 @@ def getReportPath(path, _tips, onlyXlsx = True, canSkip = False):
     # output \n
     print("\n")
     
+    Logger.addLog("GET {} PATH!! Path = {}".format(_tips, _pathList[_index - 1]))
     return _pathList[_index - 1]
 
 

@@ -1,4 +1,5 @@
 from error import processException, ErrorList, Error,Warning, NotFound
+from log import Logger
 import utils
 from datetime import datetime
 from os import path as osPath
@@ -68,7 +69,7 @@ class SaleAmount:
             #判断是否是文件夹
             if osPath.isdir(_lastpath): 
                 # 递归搜索
-                self.processDir(_lastpath)
+                self.processSecondLevelDir(_lastpath)
             else:
                 # to process each file
                 
@@ -80,7 +81,8 @@ class SaleAmount:
                     if "~$" in _file:
                         ErrorList.addError(Warning(_lastpath, "find \'~$\' in the file name, do use \'~$\' for file name in case we see it as temporary files"))
                         continue
-
+                    
+                    Logger.addPrefabLog(Logger.LOG_TYPE_DO,_lastpath)
                     self.processInfoWithTime(_lastpath)
    
 

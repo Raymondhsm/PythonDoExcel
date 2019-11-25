@@ -1,4 +1,5 @@
 from error import processException, ErrorList, NotFound
+from log import Logger
 from xlrd import open_workbook
 from openpyxl import load_workbook,Workbook
 
@@ -12,6 +13,7 @@ class profitInfo:
 class Profit:
 
     def __init__(self, originPath, updatePath):
+        Logger.addLog("CREATE profit! originPath = {}, updatePath = {}".format(originPath,updatePath))
         self.updatePath = updatePath
         try:
             originBook = open_workbook(originPath)
@@ -27,11 +29,15 @@ class Profit:
     
     def processProfitUpdate(self):
         print("正在读取文件...")
+        Logger.addLog("READ profit!!")
         profitList = self.__readProfit()
         print("正在写入文件...")
+        Logger.addLog("WRITE profit!!")
         self.__writeProfit(profitList)
 
+
     def save(self, outPath = ""):
+        Logger.addPrefabLog(Logger.LOG_TYPE_SAVE, outPath)
         try:
             print("正在保存文件...")
             if outPath == "":

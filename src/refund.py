@@ -1,4 +1,5 @@
 from error import processException, ErrorList, Error, NotFound
+from log import Logger
 import utils
 from xlrd import open_workbook
 
@@ -24,6 +25,7 @@ class refundInfo:
 class Refund:
     
     def __init__(self, _summary, _notfoundTable):
+        Logger.addLog("CREATE refund!!")
         self.summary = _summary
         self.notfoundTable = _notfoundTable
         self.__correctCount = 0
@@ -33,6 +35,7 @@ class Refund:
     def processRefundInfo(self, _filePath):
 
         try:
+            Logger.addLog("OPEN REFUND FILE!! Path = " + _filePath)
             _refundBook = open_workbook(_filePath,formatting_info=True)
             _refundSheets = _refundBook.sheets()
 
@@ -43,6 +46,7 @@ class Refund:
             _infoType = _refundsheet.name
 
             print("正在处理 " + _infoType + " 退款金额...")
+            Logger.addLog("PROCESS {} 退款".format(_infoType))
 
             _refundInfoList = self.__getRefundInfo(_refundsheet)
             self.__setRefundInfo(_infoType, _refundInfoList)

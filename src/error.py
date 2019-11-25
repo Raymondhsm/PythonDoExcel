@@ -1,5 +1,6 @@
 import sys
 import linecache
+from log import Logger
 from os import system
 
 
@@ -31,6 +32,7 @@ class ErrorList:
 
     @classmethod
     def addError(ErrorList, _error):
+        Logger.addLog(_error.toString())
         if type(_error) == Error:
             ErrorList.__errorList.append(_error)
 
@@ -61,6 +63,9 @@ class ErrorBase:
     def printInfo(self):
         pass
 
+    def toString(self):
+        pass
+
 
 class Error(ErrorBase):
     def __init__(self,_path,_message):
@@ -72,6 +77,10 @@ class Error(ErrorBase):
         print("ERROR: " + self.message)
         print("PATH: " + self.path + "\n")
 
+    def toString(self):
+        string = "ERROR: Massage: {}\n\t Path:{}".format(self.message, self.path)
+        return string
+
 
 class Warning(ErrorBase):
     def __init__(self,_path,_message):
@@ -82,6 +91,10 @@ class Warning(ErrorBase):
         print("Warning: " + self.message)
         print("PATH: " + self.path + "\n")
 
+    def toString(self):
+        string = "WARNING: Massage: {}\n\t Path:{}".format(self.message, self.path)
+        return string
+
 
 class NotFound(ErrorBase):
     def __init__(self,_path,_message):
@@ -90,6 +103,10 @@ class NotFound(ErrorBase):
 
     def printInfo(self):
         print("PATH: " + self.path)
+    
+    def toString(self):
+        string = "NOTFOUND: Massage: {}\n\t Path:{}".format(self.message, self.path)
+        return string
 
 
 def processException():
