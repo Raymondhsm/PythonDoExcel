@@ -11,6 +11,10 @@ import notfound
 
 
 def __doSA(path = "./"):
+    _option = input("是否要做金额录入，是就输入点东西，否就啥也不输：")
+    _doSA = False if _option == "" else True
+    Logger.addLog("输入：{}，退款{}".format(_option, _doSA))
+
     _option = input("是否要做退款录入，是就输入点东西，否就啥也不输：")
     _doRefund = False if _option == "" else True
     Logger.addLog("输入：{}，退款{}".format(_option, _doRefund))
@@ -26,8 +30,9 @@ def __doSA(path = "./"):
     _notfoundTable = NF.getNotfoundTable()
 
     # 处理销售额
-    SA = saleAmount.SaleAmount(_summary,_notfoundTable)
-    SA.processDir(path)
+    if _doSA:
+        SA = saleAmount.SaleAmount(_summary,_notfoundTable)
+        SA.processDir(path)
 
     # 处理退款
     if _doRefund:
@@ -59,7 +64,7 @@ def __doPF(path = "./"):
 
 
 def doGuide(path = "./"):
-    option = input("输入点东西就进入更新汇总表功能\n什么都不输就进入更新成本功能：")
+    option = input("输入点东西就进入更新成本功能\n什么都不输就进入更新汇总表功能：")
     if option == "":
         Logger.addLog("输入：{}，处理saleAmount。".format(option))
         __doSA(path)
