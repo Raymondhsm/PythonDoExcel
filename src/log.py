@@ -1,8 +1,11 @@
 from datetime import datetime
 
 class Log:
-    def __init__(self, message, date = datetime.now()):
-        self.date = date
+    def __init__(self, message, date = None):
+        if date is None: 
+            self.date = datetime.now()
+        else :
+            self.date = date
         self.message = message
 
     def printLog(self):
