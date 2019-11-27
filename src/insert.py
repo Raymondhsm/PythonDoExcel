@@ -1,4 +1,5 @@
 from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
 from copy import copy
 
 insert = load_workbook("../data/insert.xlsx")
@@ -10,10 +11,19 @@ outmerges = table.merged_cells
 #     print(merge.max_col)
 
 
+def setColor(cell, color):
+    '''
+    纯色填充
+    \n'lightGrid', 'gray0625', 'lightTrellis', 'lightDown', 'lightVertical', 'darkTrellis', 'darkHorizontal', 'darkVertical', 'darkGrid', 'darkGray', 'solid', 'darkUp', 'lightGray', 'mediumGray', 'darkDown', 'lightHorizontal', 'lightUp', 'gray125'
+    '''
+    fill = PatternFill("solid", fgColor = color)
+    cell.fill = fill
+
+
+
 def copy_cell(source_cell, target_cell):
     target_cell.data_type = source_cell.data_type
     target_cell.value = source_cell.value
-    target_cell.fill = copy(source_cell.fill)
     if source_cell.has_style:
         target_cell._style = copy(source_cell._style)
         target_cell.font = copy(source_cell.font)
