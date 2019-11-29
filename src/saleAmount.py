@@ -1,6 +1,7 @@
 from error import processException, ErrorList, Error,Warning, NotFound
 from log import Logger
 import utils
+import xlsutils
 from datetime import datetime
 from os import path as osPath
 from os import listdir,system
@@ -173,8 +174,7 @@ class SaleAmount:
         else :
             # else write down the margin 
             self.__notfoundTable["I" + str(_row)].value = _infoInstance.salesAmount
-
-
+ 
 
     def __setInfo(self, _platform, _infoType, _infoList, _path):
         try:
@@ -225,11 +225,31 @@ class SaleAmount:
                 if isFind:
                     continue
                 else:
+                    # insert a new row
+                    xlsutils.insert_rows(reportTable, index + offset + 1, True)
+                    offset += 1
+
+                    # write the data
+                    row = index + offset
+                    reportTable["B" + str(row)].value = _infoType
+                    reportTable["D" + str(row)].value = infoInstance.account
+                    reportTable["E" + str(row)].value = infoInstance.name
+                    reportTable["F" + str(row)].value = infoInstance.name + " " + infoInstance.location
+                    if infoInstance.normal :
+                        reportTable["G" + str(row)].value = infoInstance.salesAmount
+                        reportTable["H" + str(row)].value = infoInstance.profitRate
+                    else :
+                        reportTable["J" + str(row)].value = infoInstance.salesAmount
+
+                    # set red color
+                    xlsutils.setColor(reportTable["D" + str(row)], "red")
+
                     self.__failCount += 1
+                    Logger.addLog("新增插入一行，插入时行号 {}，账号 {}".format(row, infoInstance.account))
                     ErrorList.addError(NotFound(_path, "存在新增数据，请自行插入，数据已录入 notfound.xlsx"))
                     self.__processNotFoundInfo(_platform, _infoType, infoInstance)
 
-                # 由于有合并表格的存在，插入一行真的极其的烦，功能后面在迭代吧，我不行了
+                
         except Exception:
             processException()
 
