@@ -1,23 +1,37 @@
-from openpyxl import load_workbook
 from openpyxl.styles import PatternFill
 from copy import copy
 
-insert = load_workbook("../data/insert.xlsx")
-table = insert[insert.sheetnames[0]]
-
-outmerges = table.merged_cells
-# for merge in merges:
-#     print(merge.min_row)
-#     print(merge.max_col)
 
 
 def setColor(cell, color):
     '''
-    纯色填充
-    \n'lightGrid', 'gray0625', 'lightTrellis', 'lightDown', 'lightVertical', 'darkTrellis', 'darkHorizontal', 'darkVertical', 'darkGrid', 'darkGray', 'solid', 'darkUp', 'lightGray', 'mediumGray', 'darkDown', 'lightHorizontal', 'lightUp', 'gray125'
+    :param\n
+        cell    单元格
+        color   输入颜色16进制RGB格式或预设颜色字符串
+                red, yellow, white, purple, grey, skyBlue, lightGreen, blue, green, black
     '''
-    fill = PatternFill("solid", fgColor = color)
-    cell.fill = fill
+
+    _color_type = {
+        "red" : "FF0000",
+        "yellow" : "EEEE00",
+        "white" : "FFFFFF",
+        "purple" : "8A2BE2",
+        "grey" : "C4C4C4",
+        "skyBlue" : "97FFFF",
+        "lightGreen" : "7FFF00",
+        "blue" : "1874CD",
+        "green" : "00CD00",
+        "black" : "0A0A0A"
+    }
+
+    if color in _color_type:
+        color =  _color_type[color]
+
+    try:
+        fill = PatternFill("solid", fgColor = color)
+        cell.fill = fill
+    except:
+        print("wrong color")
 
 
 
@@ -131,11 +145,3 @@ def insert_cols(table, col, attach_direction = None, amount = 1):
         
         table.merge_cells(None, merge.min_row, min_col, merge.max_row, max_col)
 
-
-table['A5'] = 10
-
-insert_cols(table,4,False)
-# insert_rows(table,12,1,True)
-# insert_rows(table,12,1,False)
-
-insert.save("../data/ooo.xlsx")
